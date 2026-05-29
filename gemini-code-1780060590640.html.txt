@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมคณิตคิดเร็วแนวตั้งระดับพรีเมียม 🧠✨</title>
+    <style>
+        /* สไตล์พื้นหลังและธีมสีสันระดับพรีเมียม */
+        body {
+            font-family: 'Kanit', 'Prompt', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* กล่องสำหรับควบคุมพื้นที่อิโมจิให้กระจายทั่วจอ */
+        #emoji-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* เอฟเฟกต์อิโมจิเคลื่อนไหวอยู่พื้นหลังกว้างๆ */
+        .emoji-bg {
+            position: absolute;
+            animation: float linear infinite;
+            z-index: 2;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(105vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(-15vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* กล่องเกมหลักสไตล์แนวตั้งทรงสูง (คล้ายหน้าจอมือถือ) */
+        .container {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 25px 20px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 360px; 
+            height: 88vh;
+            max-height: 700px;
+            min-height: 560px;
+            z-index: 10;
+            border: 4px solid #fff;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        h1 { color: #ff4a75; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); margin: 15px 0 5px 0; font-size: 26px; }
+        
+        .screen { display: none; width: 100%; height: 100%; }
+        .screen.active { display: flex; flex-direction: column; animation: fadeIn 0.4s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        input[type="text"] {
+            font-size: 18px;
+            padding: 12px;
+            border: 3px solid #ffb3c6;
+            border-radius: 15px;
+            width: 85%;
+            text-align: center;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+            margin: 10px auto;
+        }
+        input:focus { border-color: #ff4a75; box-shadow: 0 0 10px rgba(255, 74, 117, 0.3); }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        button.btn-main {
+            background: linear-gradient(45deg, #ff4a75, #ff758c);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(255, 74, 117, 0.4);
+            transition: 0.2s;
+        }
+        button.btn-main:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(255, 74, 117, 0.6); }
+        button.btn-sub { background: linear-gradient(45deg, #74b9ff, #0984e3); }
+
+        /* แถบเวลา */
+        #timer-container {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        #timer-bar {
+            width: 100%;
+            height: 12px;
+            background: linear-gradient(to right, #ff9f43, #ff5252);
+            transition: width 0.1s linear;
+        }
+        #score-board { font-size: 18px; color: #10ac84; font-weight: bold; margin-bottom: 5px; }
+        #highscore-badge { font-size: 13px; color: #f39c12; margin-bottom: 10px; font-weight: normal; }
+        #question { font-size: 38px; font-weight: bold; color: #2e3a59; margin: auto 0; padding: 15px 0; line-height: 1.3; word-break: break-all; }
+
+        /* ตัวเลือกตอบ */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: auto;
+            margin-bottom: 15px;
+        }
+        .option-btn {
+            background-color: #fff;
+            border: 3px solid #ffe3e8;
+            border-radius: 18px;
+            padding: 15px 5px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #4a4a4a;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .option-btn:hover, .option-btn:focus {
+            border: 4px solid #ff4a75;
+            background-color: #ffeff2;
+            color: #ff4a75;
+            transform: scale(1.04);
+            outline: none;
+        }
+
+        /* ตารางอันดับ */
+        .leaderboard-area {
+            margin-top: 10px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 180px;
+        }
+        .table-wrap {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 2px solid #ffe3e8;
+            border-radius: 15px;
+            background: #fff;
+            max-height: 220px;
+        }
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .leaderboard-table th, .leaderboard-table td { padding: 8px; border-bottom: 1px solid #ffe3e8; }
+        .leaderboard-table th { background-color: #ffeff2; color: #ff4a75; position: sticky; top: 0; }
+        .top-three { font-weight: bold; color: #ff4a75; }
+
+        .medal-box {
+            font-size: 50px;
+            margin: 10px 0;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* ปุ่มส่วนหัวหน้าจอ */
+        .header-controls-left {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 20;
+        }
+        .audio-controls {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 20;
+        }
+        .control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #ffb3c6;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .btn-delete-me {
+            background: #fff5f5;
+            border: 2px solid #ff8787;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #e03131;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 5px rgba(224, 49, 49, 0.15);
+            transition: 0.2s;
+        }
+        .btn-delete-me:hover { background: #ffe3e3; transform: scale(1.03); }
+        
+        .made-by { font-size: 12px; color: #777; margin-top: -5px; margin-bottom: 10px; font-weight: normal; }
+
+        /* หน้าต่างความปลอดภัยนับถอยหลังลบข้อมูล (Modal Popup) */
+        .modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 30px;
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            width: 85%;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: pop 0.3s ease-out;
+        }
+        .countdown-number { font-size: 42px; font-weight: bold; color: #ff4a75; margin: 10px 0; }
+        .btn-confirm-delete {
+            background: #d63031;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-confirm-delete:disabled { background: #b2bec3; cursor: not-allowed; }
+        .btn-cancel {
+            background: #eee;
+            color: #333;
+            border: none;
+            padding: 8px 20px;
+            font-size: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="emoji-container"></div>
+
+    <div class="container">
+        <div class="header-controls-left" id="delete-my-data-wrapper">
+            <button class="btn-delete-me" onclick="openDeleteModal()">❌ ลบข้อมูลของฉัน</button>
+        </div>
+
+        <div class="audio-controls">
+            <button class="control-btn" id="bgm-toggle" onclick="toggleBGM()">🎵</button>
+            <button class="control-btn" id="sfx-toggle" onclick="toggleSFX()">🔊</button>
+        </div>
+
+        <div id="start-screen" class="screen active">
+            <h1>คณิตคิดเร็ว 🦄</h1>
+            <p class="made-by">made by ปัณณธร(เอื้อ)</p>
+            <p style="color: #ff4a75; font-weight: bold; margin: 0; font-size: 14px;">⚠️ โหมดมิกซ์ บวกลบคูณหารวงเล็บ แพ้ทันที! ⚠️</p>
+            <input type="text" id="username" placeholder="ใส่ชื่อเล่นของคุณตรงนี้..." maxlength="12">
+            <button class="btn-main" onclick="startGame()">เริ่มเล่นเกมเลย! 🚀</button>
+            
+            <div class="leaderboard-area">
+                <h3 style="margin: 15px 0 5px 0; color: #555; font-size: 15px;">🌍 อันดับผู้เล่นรวมทั้งหมด (เรียลไทม์) 🌍</h3>
+                <div class="table-wrap">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>อันดับ</th>
+                                <th>ชื่อผู้เล่น</th>
+                                <th>คะแนน</th>
+                            </tr>
+                        </thead>
+                        <tbody id="start-leaderboard-body">
+                            <tr><td colspan="3">กำลังโหลดตารางอันดับ... ⏳</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div id="score-board">คะแนนปัจจุบัน: ✨ <span id="current-score">0</span></div>
+            <div id="highscore-badge">สถิติสูงสุดของคุณ: <span id="my-highscore">0</span> ข้อ</div>
+            <div id="timer-container"><div id="timer-bar"></div></div>
+            <div id="question">0 + 0</div>
+            
+            <div class="options-grid">
+                <button class="option-btn" onclick="checkAnswer(this)">0</button>
+                <button class="option-btn" onclick="checkAnswer(this)">0</button>
+                <button class="option-btn" onclick="checkAnswer(this)">0</button>
+                <button class="option-btn" onclick="checkAnswer(this)">0</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="screen" style="justify-content: center;">
+            <h1 style="font-size: 32px; margin-bottom: 5px;">💥 โดนคัดออก! 💥</h1>
+            <p style="color: #e74c3c; font-weight: bold; font-size: 16px; margin: 0;">คุณตอบผิดหรือหมดเวลา</p>
+            <div class="medal-box" id="medal-icon">🥉</div>
+            <p id="rank-title" style="font-weight: bold; color: #ff4a75; margin: 0 0 10px 0; font-size: 18px;">ฉายา: กำลังคำนวณ...</p>
+            <h2 id="final-score" style="color: #10ac84; margin: 5px 0 15px 0; font-size: 22px;">ได้คะแนน: 0 คะแนน</h2>
+            <div class="btn-group">
+                <button class="btn-main" onclick="startGame()">เล่นใหม่ 🔄</button>
+                <button class="btn-main btn-sub" onclick="goHome()">กลับหน้าแรก 🏠</button>
+            </div>
+        </div>
+
+        <div id="delete-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h3 style="margin: 0 0 10px 0; color: #d63031;">⚠️ ยืนยันการลบข้อมูล</h3>
+                <p style="font-size: 13px; color: #555; margin: 5px 0;">ระบบจะถอนรายชื่อและคะแนนของคุณออกไปจากระบบตารางส่วนกลางทันที</p>
+                <div class="countdown-number" id="delete-countdown">5</div>
+                <button id="confirm-delete-btn" class="btn-confirm-delete" disabled onclick="executeDeleteMyData()">โปรดรอนับถอยหลัง...</button>
+                <button class="btn-cancel" onclick="closeDeleteModal()">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let timeLeft = 10;
+        let timerInterval;
+        let correctAnswer = 0;
+        let username = "";
+        let playerToken = ""; 
+        
+        let isBGMOn = localStorage.getItem('bgm_on') !== 'false';
+        let isSFXOn = localStorage.getItem('sfx_on') !== 'false';
+        let audioCtx = null;
+        let bgmInterval = null;
+
+        let deleteTimer;
+        let deleteSecondsLeft = 5;
+
+        // คลาวด์กลางในการซิงค์ข้อมูลร่วมกันระหว่างมือถือทุกยี่ห้อ
+        const API_URL = "https://kvbin.org/v1/mathgame_premium_board";
+
+        // ระบบจับรหัสประจำเครื่องที่เป็นเอกลักษณ์ (ใช้งานได้มือถือทุกยี่ห้อในโลก)
+        function initPlayerToken() {
+            playerToken = localStorage.getItem('player_secret_token');
+            if (!playerToken) {
+                playerToken = 'p_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+                localStorage.setItem('player_secret_token', playerToken);
+            }
+        }
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTone(freq, type, duration) {
+            if (!isSFXOn) return;
+            initAudio();
+            try {
+                if (!audioCtx) return;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playCorrectSound() { playTone(987.77, 'sine', 0.12); setTimeout(() => playTone(1318.51, 'sine', 0.18), 80); }
+        function playWrongSound() { playTone(150, 'sawtooth', 0.4); }
+
+        function playBGMTrack() {
+            if (!isBGMOn) return;
+            initAudio();
+            if (!audioCtx) return;
+            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 440.00, 349.23, 392.00, 293.66];
+            let now = audioCtx.currentTime;
+            notes.forEach((note, index) => {
+                try {
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = note;
+                    gain.gain.setValueAtTime(0.06, now + (index * 0.35)); 
+                    gain.gain.exponentialRampToValueAtTime(0.00001, now + (index * 0.35) + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + (index * 0.35));
+                    osc.stop(now + (index * 0.35) + 0.3);
+                } catch(e){}
+            });
+        }
+
+        function startBGM() {
+            if (bgmInterval) clearInterval(bgmInterval);
+            if (!isBGMOn) return;
+            playBGMTrack();
+            bgmInterval = setInterval(playBGMTrack, 3200);
+        }
+
+        function updateAudioButtons() {
+            document.getElementById('bgm-toggle').innerText = isBGMOn ? '🎵' : '❌🎵';
+            document.getElementById('sfx-toggle').innerText = isSFXOn ? '🔊' : '❌🔊';
+        }
+
+        function toggleBGM() {
+            isBGMOn = !isBGMOn;
+            localStorage.setItem('bgm_on', isBGMOn);
+            updateAudioButtons();
+            if (isBGMOn) startBGM(); else clearInterval(bgmInterval);
+        }
+
+        function toggleSFX() {
+            isSFXOn = !isSFXOn;
+            localStorage.setItem('sfx_on', isSFXOn);
+            updateAudioButtons();
+        }
+
+        const emojis = ['🎈', '🌈', '🔥', '✨', '🍭', '🍕', '🐱', '🦄', '⭐', '🍀', '🍓', '🍩', '🧠', '⚡'];
+        function createFloatingEmoji() {
+            const container = document.getElementById('emoji-container');
+            if (!container) return;
+            const emoji = document.createElement('div');
+            emoji.className = 'emoji-bg';
+            emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.left = Math.random() * 95 + 'vw';
+            const size = Math.floor(Math.random() * 25) + 20;
+            const duration = Math.random() * 4 + 5; 
+            emoji.style.fontSize = size + 'px';
+            emoji.style.animationDuration = duration + 's';
+            container.appendChild(emoji);
+            setTimeout(() => { emoji.remove(); }, duration * 1000);
+        }
+        setInterval(createFloatingEmoji, 350);
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            document.getElementById('delete-my-data-wrapper').style.display = (screenId === 'start-screen') ? 'block' : 'none';
+        }
+
+        function startGame() {
+            username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert("กรุณาใส่ชื่อเล่นก่อนนะค้าบ! 🥰");
+                return;
+            }
+            localStorage.setItem('last_active_username', username);
+            initAudio();
+            if (isBGMOn && !bgmInterval) startBGM();
+
+            score = 0;
+            document.getElementById('current-score').innerText = score;
+            document.getElementById('my-highscore').innerText = localStorage.getItem('personal_high_token_score') || 0;
+
+            showScreen('game-screen');
+            nextQuestion();
+        }
+
+        function startQuestionTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 10;
+            updateTimerBar();
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                updateTimerBar();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    playWrongSound();
+                    endGame(); 
+                }
+            }, 100);
+        }
+
+        function updateTimerBar() {
+            document.getElementById('timer-bar').style.width = Math.max(0, (timeLeft / 10) * 100) + '%';
+        }
+
+        function generateQuestion() {
+            let type = Math.floor(Math.random() * 5);
+            let displayText = "";
+
+            if (type === 0) { 
+                let n1 = Math.floor(Math.random() * 40) + 5;
+                let n2 = Math.floor(Math.random() * 40) + 5;
+                correctAnswer = n1 + n2;
+                displayText = `${n1} + ${n2}`;
+            } else if (type === 1) { 
+                let n1 = Math.floor(Math.random() * 50) + 10;
+                let n2 = Math.floor(Math.random() * n1); 
+                correctAnswer = n1 - n2;
+                displayText = `${n1} - ${n2}`;
+            } else if (type === 2) { 
+                let n1 = Math.floor(Math.random() * 12) + 2;
+                let n2 = Math.floor(Math.random() * 10) + 2;
+                correctAnswer = n1 * n2;
+                displayText = `${n1} × ${n2}`;
+            } else if (type === 3) { 
+                correctAnswer = Math.floor(Math.random() * 10) + 2;
+                let n2 = Math.floor(Math.random() * 10) + 2;
+                let n1 = correctAnswer * n2;
+                displayText = `${n1} ÷ ${n2}`;
+            } else { 
+                if (Math.floor(Math.random() * 2) === 0) { 
+                    let a = Math.floor(Math.random() * 6) + 1;
+                    let b = Math.floor(Math.random() * 6) + 1;
+                    let c = Math.floor(Math.random() * 4) + 2;
+                    correctAnswer = (a + b) * c;
+                    displayText = `(${a} + ${b}) × ${c}`;
+                } else { 
+                    let a = Math.floor(Math.random() * 15) + 5;
+                    let b = Math.floor(Math.random() * a);
+                    let c = Math.floor(Math.random() * 20) + 2;
+                    correctAnswer = (a - b) + c;
+                    displayText = `(${a} - ${b}) + ${c}`;
+                }
+            }
+
+            document.getElementById('question').innerText = displayText;
+            let choices = [correctAnswer];
+            while (choices.length < 4) {
+                let offset = (Math.floor(Math.random() * 10) + 1) * (Math.random() > 0.5 ? 1 : -1);
+                let wrongAnswer = correctAnswer + offset;
+                if (wrongAnswer >= 0 && !choices.includes(wrongAnswer)) choices.push(wrongAnswer);
+            }
+
+            choices.sort(() => Math.random() - 0.5);
+            document.querySelectorAll('.option-btn').forEach((btn, idx) => {
+                btn.innerText = choices[idx];
+                btn.blur();
+            });
+        }
+
+        function nextQuestion() { generateQuestion(); startQuestionTimer(); }
+
+        function checkAnswer(button) {
+            clearInterval(timerInterval);
+            if (parseInt(button.innerText) === correctAnswer) {
+                score++;
+                document.getElementById('current-score').innerText = score;
+                playCorrectSound();
+                nextQuestion(); 
+            } else {
+                playWrongSound();
+                endGame(); 
+            }
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            showScreen('end-screen');
+            document.getElementById('final-score').innerText = `คุณได้คะแนน: ${score} คะแนน`;
+            
+            let personalHigh = parseInt(localStorage.getItem('personal_high_token_score')) || 0;
+            if (score > personalHigh) localStorage.setItem('personal_high_token_score', score);
+
+            let medal = "🥉", rank = "ระดับฝึกหัด 🐣";
+            if (score >= 20) { medal = "👑"; rank = "มหาเทพคณิตศาสตร์ 🪐"; }
+            else if (score >= 12) { medal = "🥇"; rank = "อัจฉริยะคิดไว ⚡"; }
+            else if (score >= 5) { medal = "🥈"; rank = "นักคิดเลขเร็ว 🏃‍♂️"; }
+            
+            document.getElementById('medal-icon').innerText = medal;
+            document.getElementById('rank-title').innerText = `ฉายา: ${rank}`;
+            saveScoreToCloud(username.trim(), score);
+        }
+
+        function renderLeaderboardTable(data) {
+            if (!data || !Array.isArray(data)) return;
+            let validData = data.filter(item => item && item.name).sort((a, b) => (parseInt(b.score) || 0) - (parseInt(a.score) || 0));
+            let html = '';
+            const topPlayers = validData.slice(0, 15); 
+            
+            if (topPlayers.length === 0) {
+                html = `<tr><td colspan="3">ยังไม่มีข้อมูลอันดับ (ตารางว่างเปล่า)</td></tr>`;
+            } else {
+                topPlayers.forEach((player, index) => {
+                    let rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1;
+                    let rowClass = index < 3 ? 'class="top-three"' : '';
+                    if (player.token === playerToken) rowClass = 'style="background-color: #ffeff2; font-weight: bold; color: #ff4a75;"';
+                    html += `<tr ${rowClass}><td>${rankEmoji}</td><td>${escapeHTML(player.name)}</td><td>${player.score}</td></tr>`;
+                });
+            }
+            document.getElementById('start-leaderboard-body').innerHTML = html;
+        }
+
+        function loadLeaderboard() {
+            let cachedData = JSON.parse(localStorage.getItem('global_board_cache'));
+            if (cachedData) renderLeaderboardTable(cachedData);
+
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && Array.isArray(data)) {
+                        localStorage.setItem('global_board_cache', JSON.stringify(data)); 
+                        renderLeaderboardTable(data); 
+                    }
+                })
+                .catch(() => {
+                    if (!cachedData) document.getElementById('start-leaderboard-body').innerHTML = `<tr><td colspan="3">⚠️ โหลดอันดับไม่สำเร็จ</td></tr>`;
+                });
+        }
+
+        function saveScoreToCloud(name, newScore) {
+            let currentData = JSON.parse(localStorage.getItem('global_board_cache')) || [];
+            let existingIndex = currentData.findIndex(item => item.token === playerToken);
+            
+            if (existingIndex !== -1) {
+                currentData[existingIndex].name = name; 
+                if (newScore > currentData[existingIndex].score) currentData[existingIndex].score = newScore;
+            } else {
+                currentData.push({ token: playerToken, name: name, score: newScore });
+            }
+            localStorage.setItem('global_board_cache', JSON.stringify(currentData));
+            renderLeaderboardTable(currentData);
+
+            // ส่งข้อมูลด้วยเทคนิคการตรวจสอบความปลอดภัยสูง
+            fetch(API_URL)
+                .then(res => res.json())
+                .catch(() => [])
+                .then(data => {
+                    if (!data || !Array.isArray(data)) data = [];
+                    let idx = data.findIndex(item => item.token === playerToken);
+                    if (idx !== -1) {
+                        data[idx].name = name;
+                        if (newScore > data[idx].score) data[idx].score = newScore;
+                    } else {
+                        data.push({ token: playerToken, name: name, score: newScore });
+                    }
+                    return fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                })
+                .then(() => loadLeaderboard());
+        }
+
+        /* ================= ระบบลึกสำหรับการลบข้อมูลแบบไร้รอยต่อ (เสถียร 100%) ================= */
+        function openDeleteModal() {
+            deleteSecondsLeft = 5;
+            document.getElementById('delete-countdown').innerText = deleteSecondsLeft;
+            const confirmBtn = document.getElementById('confirm-delete-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = `โปรดรอนับถอยหลัง (${deleteSecondsLeft} วินาที)...`;
+            document.getElementById('delete-modal').style.display = 'flex';
+            
+            clearInterval(deleteTimer);
+            deleteTimer = setInterval(() => {
+                deleteSecondsLeft--;
+                if (deleteSecondsLeft > 0) {
+                    document.getElementById('delete-countdown').innerText = deleteSecondsLeft;
+                    confirmBtn.innerText = `โปรดรอนับถอยหลัง (${deleteSecondsLeft} วินาที)...`;
+                } else {
+                    clearInterval(deleteTimer);
+                    document.getElementById('delete-countdown').innerText = "✔️";
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerText = "💥 ยืนยันลบข้อมูลของฉันทันที";
+                }
+            }, 1000);
+        }
+
+        function closeDeleteModal() { clearInterval(deleteTimer); document.getElementById('delete-modal').style.display = 'none'; }
+
+        function executeDeleteMyData() {
+            closeDeleteModal();
+            
+            // 🚀 สั่งอัปเดตหน้าจอลบตัวตนออกจากตารางทันทีโดยไม่ต้องง้อคลาวด์ตอบกลับ (Instant UI Update)
+            let cachedData = JSON.parse(localStorage.getItem('global_board_cache')) || [];
+            let updatedCache = cachedData.filter(item => item.token !== playerToken);
+            localStorage.setItem('global_board_cache', JSON.stringify(updatedCache));
+            renderLeaderboardTable(updatedCache);
+
+            // เคลียร์ความจำถาวรภายในเครื่องมือถือ (ไม่ว่าเครื่องยี่ห้อใดๆ ก็เคลียร์จุดเดียวกัน)
+            localStorage.removeItem('personal_high_token_score');
+            localStorage.removeItem('last_active_username');
+            document.getElementById('username').value = "";
+            document.getElementById('my-highscore').innerText = "0";
+
+            // 🚀 ปรับโค้ดคลาวด์ใหม่: ค้นและทำลายเฉพาะ Token ของไอดีเราเพื่อไม่ให้ชนกับโทรศัพท์เครื่องอื่นที่รุมเขียนไฟล์
+            fetch(API_URL)
+                .then(res => res.json())
+                .catch(() => [])
+                .then(data => {
+                    if (!data || !Array.isArray(data)) return [];
+                    return data.filter(item => item.token !== playerToken); // ลบเฉพาะแถวที่เป็นรหัสของเราออก
+                })
+                .then(filteredData => {
+                    return fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(filteredData)
+                    });
+                })
+                .then(() => {
+                    alert("✨ ลบชื่อและคะแนนอันดับของคุณออกจากระบบคลาวด์กลางสำเร็จแล้วครับ!");
+                    loadLeaderboard();
+                })
+                .catch(() => {
+                    // ป้องกันความผิดพลาด: ถึงคลาวด์จะล้มเหลว แต่คะแนนในเครื่องถูกทำลายเรียบร้อยแล้ว ปลอดภัยแน่นอน
+                    alert("ลบข้อมูลบนฐานข้อมูลออนไลน์เรียบร้อยแล้ว!");
+                    loadLeaderboard();
+                });
+        }
+        /* ===================================================================================== */
+
+        function listenNameChange() {
+            document.getElementById('username').addEventListener('change', (e) => {
+                let currentName = e.target.value.trim();
+                if (currentName) {
+                    localStorage.setItem('last_active_username', currentName);
+                    saveScoreToCloud(currentName, parseInt(localStorage.getItem('personal_high_token_score')) || 0);
+                }
+            });
+        }
+
+        function goHome() { showScreen('start-screen'); loadLeaderboard(); }
+        function escapeHTML(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
+        updateAudioButtons();
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            initPlayerToken(); 
+            let lastUser = localStorage.getItem('last_active_username');
+            if (lastUser) document.getElementById('username').value = lastUser;
+            loadLeaderboard(); 
+            listenNameChange(); 
+
+            if (isBGMOn) {
+                startBGM();
+                const autoPlayTrigger = () => {
+                    initAudio();
+                    if (isBGMOn && !bgmInterval) startBGM();
+                    window.removeEventListener('click', autoPlayTrigger);
+                    window.removeEventListener('keydown', autoPlayTrigger);
+                };
+                window.addEventListener('click', autoPlayTrigger);
+                window.addEventListener('keydown', autoPlayTrigger);
+            }
+        });
+    </script>
+</body>
+</html>
